@@ -278,7 +278,7 @@
     setSyncStatus('loading', 'loading…');
     const data = await ghFetch('GET');
     fileSha = data.sha;
-    items = JSON.parse(atob(data.content.replace(/\n/g, '')));
+    items = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g, '')))));
     setSyncStatus('ok', 'synced');
   }
 
