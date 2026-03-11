@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Read Later</title>
+  <style>
+    :root {
+      --bg: #0f0f13;
+      --surface: #1a1a22;
+      --surface2: #23232e;
+      --border: #2e2e3d;
+      --accent: #7c6af7;
+      --accent-dim: #4a4180;
+      --text: #e8e8f0;
+      --text-muted: #8888aa;
+      --danger: #e05c6a;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.3px; }
+    .logo span { color: var(--accent); }
+    .count-badge {
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 20px;
+    }
+
+    /* ── Layout ── */
+    .container { max-width: 800px; margin: 0 auto; padding: 24px 16px; }
+
+    /* ── Add form ── */
+    .add-form {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 28px;
+    }
+    .add-form h2 { font-size: 0.9rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; }
+
+    .form-row { display: flex; flex-direction: column; gap: 10px; }
+
+    input, textarea, select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 0.95rem;
+      font-family: inherit;
+      padding: 10px 12px;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+    input::placeholder, textarea::placeholder { color: var(--text-muted); }
+
+    textarea { resize: vertical; min-height: 70px; }
+
+    .form-row-inline { display: flex; gap: 10px; flex-wrap: wrap; }
+    .form-row-inline .category-wrap { flex: 1; min-width: 160px; display: flex; gap: 8px; }
+    .form-row-inline .category-wrap input { flex: 1; }
+    .form-row-inline .category-wrap .existing-cats {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 0.95rem;
+      padding: 10px 8px;
+      min-width: 120px;
+      cursor: pointer;
+    }
+
+    .btn-add {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 11px 22px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      white-space: nowrap;
+    }
+    .btn-add:hover { opacity: 0.85; }
+
+    /* ── Filter bar ── */
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+    .filter-label { font-size: 0.8rem; color: var(--text-muted); margin-right: 2px; }
+    .tag-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 20px;
+      padding: 5px 13px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tag-btn:hover { border-color: var(--accent); color: var(--text); }
+    .tag-btn.active {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ── Search ── */
+    .search-wrap { margin-bottom: 18px; position: relative; }
+    .search-wrap input { padding-left: 36px; }
+    .search-icon {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      pointer-events: none;
+    }
+
+    /* ── Cards ── */
+    .cards { display: flex; flex-direction: column; gap: 12px; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      animation: fadeIn 0.2s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+
+    .card-link-wrap { flex: 1; min-width: 0; }
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 3px;
+    }
+    .card-url {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.82rem;
+      color: var(--accent);
+      text-decoration: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+    .card-url:hover { text-decoration: underline; }
+    .card-url svg { flex-shrink: 0; }
+
+    .card-actions { display: flex; gap: 6px; align-items: center; }
+
+    .btn-icon {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 5px 8px;
+      font-size: 0.85rem;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-icon:hover { border-color: var(--text-muted); color: var(--text); }
+    .btn-icon.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+    .card-note {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    .card-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .cat-tag {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 20px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .date-label { font-size: 0.75rem; color: var(--text-muted); margin-left: auto; }
+
+    /* ── Edit mode ── */
+    .card.editing { border-color: var(--accent); }
+    .card-edit-area { display: flex; flex-direction: column; gap: 8px; }
+    .edit-actions { display: flex; gap: 8px; }
+    .btn-save {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 7px 16px;
+      cursor: pointer;
+    }
+    .btn-cancel {
+      background: var(--surface2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 7px 16px;
+      cursor: pointer;
+    }
+
+    /* ── Empty state ── */
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+    .empty .icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .empty p { font-size: 0.95rem; }
+
+    /* ── Mobile tweaks ── */
+    @media (max-width: 520px) {
+      .form-row-inline { flex-direction: column; }
+      .card-top { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Read<span>Later</span></div>
+  <span class="count-badge" id="totalCount">0 saved</span>
+</header>
+
+<div class="container">
+
+  <!-- Add form -->
+  <div class="add-form">
+    <h2>Save a link</h2>
+    <div class="form-row">
+      <input type="url" id="inputUrl" placeholder="Paste URL here (Facebook, Threads, Substack, any page…)" />
+      <input type="text" id="inputTitle" placeholder="Title (optional — auto-filled from URL if blank)" />
+      <textarea id="inputNote" placeholder="Notes — what's it about? why save it?"></textarea>
+      <div class="form-row-inline">
+        <div class="category-wrap">
+          <input type="text" id="inputCategory" placeholder="Category / tag" />
+          <select class="existing-cats" id="existingCats" title="Pick existing category">
+            <option value="">Existing…</option>
+          </select>
+        </div>
+        <button class="btn-add" id="btnAdd">+ Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search -->
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Search by title, URL, or notes…" />
+  </div>
+
+  <!-- Filter tags -->
+  <div class="filter-bar" id="filterBar">
+    <span class="filter-label">Filter:</span>
+    <button class="tag-btn active" data-cat="all">All</button>
+  </div>
+
+  <!-- Cards -->
+  <div class="cards" id="cardList"></div>
+  <div class="empty" id="emptyState" style="display:none">
+    <div class="icon">📚</div>
+    <p>No links saved yet — paste one above to get started.</p>
+  </div>
+
+</div>
+
+<script>
+  const STORE_KEY = 'readlater_v1';
+  let items = [];
+  let activeFilter = 'all';
+  let searchQuery = '';
+
+  // ── Persistence ──────────────────────────────────────────
+  function save() {
+    localStorage.setItem(STORE_KEY, JSON.stringify(items));
+  }
+  function load() {
+    try { items = JSON.parse(localStorage.getItem(STORE_KEY)) || []; } catch { items = []; }
+  }
+
+  // ── Helpers ───────────────────────────────────────────────
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+  function formatDate(ts) {
+    const d = new Date(ts);
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function shortUrl(url) {
+    try {
+      const u = new URL(url);
+      return (u.hostname + u.pathname).replace(/\/$/, '').slice(0, 55);
+    } catch { return url.slice(0, 55); }
+  }
+
+  function getFavicon(url) {
+    try { return `https://www.google.com/s2/favicons?sz=16&domain=${new URL(url).hostname}`; }
+    catch { return ''; }
+  }
+
+  function guessTitleFromUrl(url) {
+    try {
+      const u = new URL(url);
+      const parts = u.hostname.replace('www.', '').split('.');
+      return parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+    } catch { return 'Untitled'; }
+  }
+
+  function allCategories() {
+    const cats = [...new Set(items.map(i => i.category).filter(Boolean))].sort();
+    return cats;
+  }
+
+  // ── Render ────────────────────────────────────────────────
+  function render() {
+    const list = document.getElementById('cardList');
+    const empty = document.getElementById('emptyState');
+    const countBadge = document.getElementById('totalCount');
+    const filterBar = document.getElementById('filterBar');
+    const catsSelect = document.getElementById('existingCats');
+
+    // Update filter bar
+    const cats = allCategories();
+    filterBar.innerHTML = `<span class="filter-label">Filter:</span>
+      <button class="tag-btn ${activeFilter === 'all' ? 'active' : ''}" data-cat="all">All</button>
+      ${cats.map(c => `<button class="tag-btn ${activeFilter === c ? 'active' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('')}`;
+    filterBar.querySelectorAll('.tag-btn').forEach(btn => {
+      btn.addEventListener('click', () => { activeFilter = btn.dataset.cat; render(); });
+    });
+
+    // Update existing cats dropdown
+    catsSelect.innerHTML = `<option value="">Existing…</option>` +
+      cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+
+    // Filter items
+    let visible = items.filter(item => {
+      const matchCat = activeFilter === 'all' || item.category === activeFilter;
+      const q = searchQuery.toLowerCase();
+      const matchSearch = !q || [item.title, item.url, item.note, item.category]
+        .some(s => s && s.toLowerCase().includes(q));
+      return matchCat && matchSearch;
+    });
+
+    countBadge.textContent = `${items.length} saved`;
+
+    if (visible.length === 0) {
+      list.innerHTML = '';
+      empty.style.display = 'block';
+      empty.querySelector('p').textContent = items.length === 0
+        ? 'No links saved yet — paste one above to get started.'
+        : 'No links match your filter / search.';
+    } else {
+      empty.style.display = 'none';
+      list.innerHTML = visible.map(item => cardHTML(item)).join('');
+      // Attach events
+      list.querySelectorAll('[data-id]').forEach(card => {
+        const id = card.dataset.id;
+        card.querySelector('.btn-delete')?.addEventListener('click', () => deleteItem(id));
+        card.querySelector('.btn-edit')?.addEventListener('click', () => startEdit(id, card));
+      });
+    }
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function cardHTML(item) {
+    const favicon = getFavicon(item.url);
+    return `
+    <div class="card" data-id="${item.id}">
+      <div class="card-top">
+        <div class="card-link-wrap">
+          <div class="card-title">${esc(item.title || guessTitleFromUrl(item.url))}</div>
+          <a class="card-url" href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">
+            ${favicon ? `<img src="${favicon}" width="14" height="14" alt="" onerror="this.remove()">` : ''}
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            ${esc(shortUrl(item.url))}
+          </a>
+        </div>
+        <div class="card-actions">
+          <button class="btn-icon btn-edit" title="Edit">✏️</button>
+          <button class="btn-icon danger btn-delete" title="Delete">🗑</button>
+        </div>
+      </div>
+      ${item.note ? `<div class="card-note">${esc(item.note)}</div>` : ''}
+      <div class="card-meta">
+        ${item.category ? `<span class="cat-tag">${esc(item.category)}</span>` : ''}
+        <span class="date-label">${formatDate(item.savedAt)}</span>
+      </div>
+    </div>`;
+  }
+
+  // ── Add item ──────────────────────────────────────────────
+  document.getElementById('btnAdd').addEventListener('click', addItem);
+  document.getElementById('inputUrl').addEventListener('keydown', e => { if (e.key === 'Enter') addItem(); });
+
+  function addItem() {
+    const url = document.getElementById('inputUrl').value.trim();
+    if (!url) { flash(document.getElementById('inputUrl')); return; }
+
+    let finalUrl = url;
+    if (!/^https?:\/\//i.test(finalUrl)) finalUrl = 'https://' + finalUrl;
+
+    const item = {
+      id: uid(),
+      url: finalUrl,
+      title: document.getElementById('inputTitle').value.trim(),
+      note: document.getElementById('inputNote').value.trim(),
+      category: document.getElementById('inputCategory').value.trim(),
+      savedAt: Date.now()
+    };
+
+    items.unshift(item);
+    save();
+
+    document.getElementById('inputUrl').value = '';
+    document.getElementById('inputTitle').value = '';
+    document.getElementById('inputNote').value = '';
+    document.getElementById('inputCategory').value = '';
+    document.getElementById('existingCats').value = '';
+
+    render();
+    document.getElementById('inputUrl').focus();
+  }
+
+  function flash(el) {
+    el.style.borderColor = 'var(--danger)';
+    el.focus();
+    setTimeout(() => el.style.borderColor = '', 1000);
+  }
+
+  // ── Delete ────────────────────────────────────────────────
+  function deleteItem(id) {
+    items = items.filter(i => i.id !== id);
+    save();
+    render();
+  }
+
+  // ── Edit ──────────────────────────────────────────────────
+  function startEdit(id, card) {
+    const item = items.find(i => i.id === id);
+    if (!item) return;
+    card.classList.add('editing');
+    card.innerHTML = `
+      <div class="card-edit-area">
+        <input class="edit-url" type="url" value="${esc(item.url)}" placeholder="URL" />
+        <input class="edit-title" type="text" value="${esc(item.title)}" placeholder="Title" />
+        <textarea class="edit-note" placeholder="Notes">${esc(item.note)}</textarea>
+        <input class="edit-cat" type="text" value="${esc(item.category)}" placeholder="Category" />
+        <div class="edit-actions">
+          <button class="btn-save">Save</button>
+          <button class="btn-cancel">Cancel</button>
+        </div>
+      </div>`;
+    card.querySelector('.btn-save').addEventListener('click', () => {
+      item.url = card.querySelector('.edit-url').value.trim() || item.url;
+      item.title = card.querySelector('.edit-title').value.trim();
+      item.note = card.querySelector('.edit-note').value.trim();
+      item.category = card.querySelector('.edit-cat').value.trim();
+      save();
+      render();
+    });
+    card.querySelector('.btn-cancel').addEventListener('click', render);
+  }
+
+  // ── Search ───────────────────────────────────────────────
+  document.getElementById('searchInput').addEventListener('input', e => {
+    searchQuery = e.target.value;
+    render();
+  });
+
+  // ── Existing cats dropdown shortcut ──────────────────────
+  document.getElementById('existingCats').addEventListener('change', e => {
+    if (e.target.value) document.getElementById('inputCategory').value = e.target.value;
+    e.target.value = '';
+  });
+
+  // ── Init ─────────────────────────────────────────────────
+  load();
+  render();
+</script>
+</body>
+</html>
